@@ -1,10 +1,27 @@
 import json
 import re
+import shutil
 from pathlib import Path
 
 # Set up base paths relative to the script location
 GEN_DIR = Path(__file__).parent
 BASE_DIR = GEN_DIR.parent
+
+def escape_latex(text):
+    """Escapes special LaTeX characters to prevent compilation errors."""
+    if not text: return text
+    # Dictionary of characters that break LaTeX if unescaped
+    # Note: We do this before adding our own LaTeX commands like \item
+    replacements = {
+        '#': r'\#',
+        '%': r'\%',
+        '&': r'\&',
+        '_': r'\_',
+        '$': r'\$'
+    }
+    for char, replacement in replacements.items():
+        text = text.replace(char, replacement)
+    return text
 
 def format_algorithm(text):
     """Converts numbered markdown lists into LaTeX item formats."""
@@ -31,14 +48,20 @@ def parse_readme(readme_path, fallback_title, language):
         # Extract AIM
         aim_match = re.search(r'# AIM\n(.*?)(?=# ALGORITHM|\Z)', content, re.DOTALL | re.IGNORECASE)
         if aim_match:
-            aim = aim_match.group(1).strip()
+            # Escape LaTeX chars in the extracted text
+            raw_aim = aim_match.group(1).strip()
+            aim = escape_latex(raw_aim)
             
         # Extract ALGORITHM
         algo_match = re.search(r'# ALGORITHM\n(.*)', content, re.DOTALL | re.IGNORECASE)
         if algo_match:
-            algorithm = format_algorithm(algo_match.group(1).strip())
+            raw_algo = algo_match.group(1).strip()
+            # Escape chars FIRST, then apply formatting
+            safe_algo = escape_latex(raw_algo)
+            algorithm = format_algorithm(safe_algo)
         else:
-            algorithm = format_algorithm(content.strip())
+            safe_content = escape_latex(content.strip())
+            algorithm = format_algorithm(safe_content)
             
     return aim, algorithm
 
@@ -53,7 +76,6 @@ def main():
         config = json.load(f)
 
     # 2. Extract dynamic config variables
-    # Defaults are provided as a fallback
     exp_dir_name = config.get("expts_dir", "experiments")
     out_dir_name = config.get("output_dir", "output")
     prefix_regex = config.get("regex", {}).get("expit_dir_enum_prefix", r"^\d+_")
@@ -82,35 +104,34 @@ def main():
     # 4. Process Experiment Folders
     exp_folders = [d for d in EXP_DIR.iterdir() if d.is_dir()]
     
-    # Smart Sorting: Extracts the actual number from "Q10_" so Q10 comes after Q9
+    # Smart Sorting
     def get_sort_key(folder):
         match = re.match(prefix_regex, folder.name)
         if match:
-            # Find the digits within the matched prefix
             num_match = re.search(r'\d+', match.group())
             if num_match:
                 return int(num_match.group())
-        return 9999  # Push unrecognized folders to the bottom
+        return 9999 
         
     exp_folders.sort(key=get_sort_key)
 
     all_sections = ""
 
     for folder in exp_folders:
-        # Check if the folder matches our configured prefix pattern
         prefix_match = re.match(prefix_regex, folder.name)
         if not prefix_match:
-            continue # Skip folders that don't match the required structure
+            continue 
             
         print(f"Processing {folder.name}...")
         
-        # Extract title by chopping off the matched prefix
+        # Extract title
         title_raw = folder.name[prefix_match.end():]
         title = title_raw.replace('_', ' ')
+        title_safe = escape_latex(title) # Sanitize the title just in case!
         
         # Parse README
         readme_path = folder / "README.md"
-        aim, algorithm = parse_readme(readme_path, title, config['code_language'])
+        aim, algorithm = parse_readme(readme_path, title_safe, config['code_language'])
         
         # Find Code File
         code_files = list(folder.glob(f"*{config['code_extension']}"))
@@ -118,16 +139,22 @@ def main():
         if code_files:
             code_content = code_files[0].read_text(encoding='utf-8')
         
-        # Find Image File (assumes screenshots are inside the Q_ folder now)
+        # Find and Copy Image File
         img_files = list(folder.glob("*.png")) + list(folder.glob("*.jpg"))
         output_latex = "No output screenshot found."
+        
         if img_files:
-            img_path = img_files[0].resolve().as_posix()
-            output_latex = f"\\includegraphics[width=\\textwidth, height=0.4\\textheight, keepaspectratio]{{{img_path}}}"
+            src_img = img_files[0]
+            safe_folder_name = folder.name.replace(' ', '_')
+            new_img_name = f"{safe_folder_name}_out{src_img.suffix}"
+            dest_img_path = OUT_DIR / new_img_name
+            
+            shutil.copy2(src_img, dest_img_path)
+            output_latex = f"\\includegraphics[width=\\textwidth, height=0.4\\textheight, keepaspectratio]{{{new_img_name}}}"
             
         # 5. Inject data into section template
         section_tex = section_template
-        section_tex = section_tex.replace("{{title}}", title.upper())
+        section_tex = section_tex.replace("{{title}}", title_safe.upper())
         section_tex = section_tex.replace("{{aim}}", aim)
         section_tex = section_tex.replace("{{algorithm}}", algorithm)
         section_tex = section_tex.replace("{{code_language}}", config['code_language'])
@@ -146,7 +173,7 @@ def main():
     # 7. Save Output
     output_file = OUT_DIR / "Lab_Record.tex"
     output_file.write_text(final_tex, encoding='utf-8')
-    print(f"\nSuccess! Lab record generated at {output_file}")
+    print(f"\nSuccess! Lab record generated in '{OUT_DIR.resolve()}'")
 
 if __name__ == "__main__":
     main()
