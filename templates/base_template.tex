@@ -4,8 +4,10 @@
 \usepackage{fancyhdr}
 \usepackage{titlesec}
 \usepackage{graphicx}
-\usepackage{listings}
+\usepackage{minted} 
 \usepackage{setspace}
+
+\setminted{breaklines, breakanywhere}
 
 \pagestyle{fancy}
 \fancyhf{}
@@ -19,7 +21,6 @@
 
 \begin{document}
 
-% Auto-generated Title Page
 \begin{titlepage}
     \centering
     \vspace*{3cm}
@@ -33,7 +34,6 @@
 \tableofcontents
 \newpage
 
-% The Python script will inject all the experiments here
 {{body}}
 
 \end{document}
