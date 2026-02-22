@@ -1,22 +1,44 @@
-%==================== TITLE ====================%
-\section{{{title}}}
-
-%==================== AIM ====================%
-\subsection*{AIM}
-{{aim}}
-{{algorithm_section}}
-%==================== PROGRAM ====================%
-\subsection*{PROGRAM}
-{{code_block}}
-
-%==================== OUTPUT ====================%
-\subsection*{OUTPUT}
+% ---------- HEADER ----------
 \begin{center}
-{{output}}
+    \Large \textbf{Program} \\
+    \vspace{0.3cm}
+    \normalsize \textbf{Date: } \\[0.5cm]
+    \vspace{0.6cm}
+    \Large \ul{\textbf{{{title}}}}
 \end{center}
 
-%==================== RESULT ====================%
-\subsection*{RESULT}
-The program was executed and verified successfully.
+\vspace{0.6cm}
+
+% ---------- AIM ----------
+\setstretch{1.3}
+\section*{Aim}
+{{aim}}
+
+\vspace{0.6cm}
+
+% ---------- ALGORITHM ----------
+{{algorithm_section}}
+
+% ---------- PROGRAM ----------
+\setstretch{1.0}
+\vspace{0.6cm}
+\section*{Program}
+{{code_block}}
+
+\newpage
+% ---------- OUTPUT ----------
+\section*{Sample Output}
+\begin{figure}[H]
+    \centering
+    \fbox{{{output}}}
+\end{figure}
+
+\vspace{0.6cm}
+
+% ---------- RESULT ----------
+\section*{Result}
+\fontsize{14}{16}\selectfont
+\textbf{The program was executed and the output verified.}
+\normalsize % Reset font size for the next page
 
 \newpage
