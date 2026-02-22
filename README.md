@@ -26,7 +26,7 @@ Your-Main-Class-Folder/       # Original directory
 │   │   ├──output.jpg         # Every directory can have zero or more output image files(jpg, png) which by default are placed in output sections
 |   │   ├── something.md      # Every directory can have zero or more md files which can be used to specify the internal structure of each experiment. Every heading(# or ## in markdown) is treated as a section inside an experiment
 │   └── Q2_Experiment_Name/
-└── generator/                # The newly cloned formatting tool
+└── generator/                # What you just cloned
     ├── generate.py
     ├── config.json
     └── templates/
@@ -104,3 +104,4 @@ Your `README.md` files require no manual LaTeX. Write normally, and the script w
 ---
 
 Would you like me to draft a quick, copy-pasteable `README.md` template that users can drop into their experiment folders to ensure the parser always catches their Aim and Algorithm headings perfectly?
+
