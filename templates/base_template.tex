@@ -1,25 +1,30 @@
-\documentclass[12pt,a4paper]{article}
-
-\usepackage[a4paper,margin=1in]{geometry}
-\usepackage{fancyhdr}
+% ---------------- FORMATTING AREA (Do Not Change) ----------------
+\documentclass{article}
 \usepackage{titlesec}
 \usepackage{graphicx}
-\usepackage{minted} 
+\usepackage{minted}
+\usepackage[a4paper, left=1.5in, right=1in, top=.25in, bottom=.25in]{geometry}
 \usepackage{setspace}
+\usepackage{soul}
+\usepackage{float} % Required to use [H] in figures
+
+% Custom section format – Underlined, Bold, Large
+\titleformat{\section}
+  {\normalfont\Large\bfseries} % Font & weight
+  {}                           % No section numbers
+  {0pt}                        % No indent
+  {\ul}                        % Underline title
+% -----------------------------------------------------------------
 
 \setminted{breaklines, breakanywhere}
-
-\pagestyle{fancy}
-\fancyhf{}
-\lhead{{{course_name}}}
-\rhead{Page \thepage}
-\renewcommand{\headrulewidth}{0.4pt}
 
 \setlength{\parindent}{0pt}
 \setlength{\parskip}{6pt}
 
 \begin{document}
+\pagenumbering{gobble} % No page numbers as per your example
 
+% Auto-generated Title Page
 \begin{titlepage}
     \centering
     \vspace*{3cm}
