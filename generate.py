@@ -15,16 +15,31 @@ def escape_latex(text):
         text = text.replace(char, replacement)
     return text
 
-def format_algorithm(text):
+def format_algorithm(text, strip_prefix):
+    """Converts markdown lists to LaTeX items, conditionally stripping prefixes."""
     lines = text.split('\n')
     formatted = []
     for line in lines:
         line = line.strip()
         if not line: continue
-        if re.match(r'^\d+\.', line):
-            formatted.append(re.sub(r'^\d+\.', r'\\item', line))
+        
+        if strip_prefix:
+            # Detects "\textbf{Step 1:}", "Step 1:", "1.", etc.
+            step_match = re.match(r'^(?:\\textbf\{)?Step\s*\d+:(?:\})?\s*', line, re.IGNORECASE)
+            num_match = re.match(r'^\d+\.\s*', line)
+            
+            if step_match:
+                clean_line = line[step_match.end():]
+                formatted.append(f"\\item {clean_line}")
+            elif num_match:
+                clean_line = line[num_match.end():]
+                formatted.append(f"\\item {clean_line}")
+            else:
+                formatted.append(f"\\item {line}")
         else:
+            # If flag is false, just wrap the whole raw line in \item
             formatted.append(f"\\item {line}")
+            
     return "\n".join(formatted)
 
 def parse_readme(readme_path, fallback_title, language):
