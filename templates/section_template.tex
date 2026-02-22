@@ -1,44 +1,45 @@
-% ---------- HEADER ----------
+%==================== TITLE ====================%
+
 \begin{center}
-    \Large \textbf{Program No: {{program_number}} }\\
-    \vspace{0.3cm}
-    \normalsize \textbf{Date: } \\[0.5cm]
-    \vspace{0.6cm}
-    \Large \ul{\textbf{{{title}}}}
+    \textbf{\Large {{program_number}}. {{title}}}
 \end{center}
 
-% Silently add this program to the Table of Contents
-\addcontentsline{toc}{section}{{{program_number}}. {{title}}}
+\vspace{0.5cm}
 
-\vspace{0.6cm}
+%==================== AIM ====================%
 
-% ---------- AIM ----------
-\setstretch{1.3}
-\section*{Aim}
+\section*{AIM}
+
 {{aim}}
 
-\vspace{0.6cm}
+\vspace{0.5cm}
 
-% ---------- ALGORITHM ----------
+%==================== ALGORITHM ====================%
+
 {{algorithm_section}}
 
-% ---------- PROGRAM ----------
-\setstretch{1.0}
-\vspace{0.6cm}
-\section*{Program}
-{{code_block}}
+%==================== PROGRAM ====================%
 
-\newpage
-% ---------- OUTPUT ----------
-\section*{Sample Output}
+\section*{PROGRAM}
+
+\begin{lstlisting}[language={{code_language}}]
+{{code_block}}
+\end{lstlisting}
+
+\vspace{0.5cm}
+
+%==================== OUTPUT ====================%
+
+\section*{OUTPUT}
+
 {{output_section}}
 
-\vspace{0.6cm}
+\vspace{0.5cm}
 
-% ---------- RESULT ----------
-\section*{Result}
-\fontsize{14}{16}\selectfont
-\textbf{The program was executed and the output verified.}
-\normalsize 
+%==================== RESULT ====================%
+
+\section*{RESULT}
+
+The program was executed and verified successfully.
 
 \newpage

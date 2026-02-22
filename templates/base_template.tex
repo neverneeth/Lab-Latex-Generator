@@ -1,48 +1,45 @@
-% ---------------- FORMATTING AREA (Do Not Change) ----------------
-\documentclass{article}
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage{fancyhdr}
 \usepackage{titlesec}
 \usepackage{graphicx}
-\usepackage{minted}
-\usepackage[a4paper, left=1.5in, right=1in, top=.25in, bottom=.25in]{geometry}
+
 \usepackage{setspace}
-\usepackage{soul}
-\usepackage{float} 
+\usepackage{float}
+
+\usepackage{listings}
+
+% --- LISTINGS CONFIGURATION ---
+\lstset{
+    basicstyle=\ttfamily\small, % Typewriter font, slightly scaled down
+    breaklines=true,            % Enable automatic line breaking
+    breakatwhitespace=true,     % Only break lines at spaces, not mid-word
+    keepspaces=true,            % Preserve indentation spaces
+    showstringspaces=false,     % Don't print weird underscores in strings
+    columns=fullflexible        % Prevents weird letter spacing
+}
+% ------------------------------
+
+\pagestyle{fancy}
+\setlength{\headheight}{15pt}
+\fancyhf{}
+\lhead{Date:}
+\rhead{Page No: \thepage}
+\renewcommand{\headrulewidth}{0pt}
 
 \titleformat{\section}
-  {\normalfont\Large\bfseries} 
-  {}                           
-  {0pt}                        
-  {\ul}                        
-% -----------------------------------------------------------------
+  {\normalfont\bfseries\uppercase}
+  {}{0em}{}
 
-\setminted{breaklines, breakanywhere}
+\titleformat{\subsection}
+  {\normalfont\bfseries}
+  {\thesubsection}{1em}{}
 
 \setlength{\parindent}{0pt}
 \setlength{\parskip}{6pt}
 
 \begin{document}
-
-% Auto-generated Title Page
-\begin{titlepage}
-    \pagenumbering{gobble} % No page numbers for the title page
-    \centering
-    \vspace*{3cm}
-    {\Huge \textbf{{{course_name}}}}\\[1.5cm]
-    {\Large \textbf{Lab Record}}\\[2cm]
-    {\Large \textbf{Name:} {{author_name}}}\\[0.5cm]
-    {\Large \textbf{Roll No:} {{author_roll}}}\\[2cm]
-\end{titlepage}
-
-\newpage
-\pagenumbering{arabic} % Turn page numbers back on for ToC and Content
-
-% Temporarily disable underlining for the ToC header
-\titleformat{\section}{\normalfont\Large\bfseries}{}{0pt}{}
-\tableofcontents
-\newpage
-
-% Re-enable the underline format
-\titleformat{\section}{\normalfont\Large\bfseries}{}{0pt}{\ul}
 
 {{body}}
 

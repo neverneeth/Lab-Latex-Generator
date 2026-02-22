@@ -142,28 +142,21 @@ def main():
         combined_algo = "\n".join(algos_list)
         
         # --- 2. GATHER ALL CODE FILES RECURSIVELY ---
+        # --- 2. GATHER ALL CODE FILES RECURSIVELY ---
         code_files = sorted(list(folder.rglob(f"*{config['code_extension']}")), key=lambda x: str(x.relative_to(folder)))
-        code_block_latex = "No code file found."
+        code_block_latex = "/* No code file found. */"
         
         if code_files:
             code_block_latex = ""
             for i, src_code in enumerate(code_files):
-                # Create a unique flat name for the output directory (e.g., Q7_IPC_a_pipe_main_code.c)
-                safe_rel_path = str(src_code.relative_to(folder)).replace('\\', '_').replace('/', '_')
-                new_code_name = f"{folder.name}_{safe_rel_path}"
-                dest_code_path = OUT_DIR / new_code_name
+                content = src_code.read_text(encoding='utf-8')
                 
-                shutil.copy2(src_code, dest_code_path)
-                
-                lang_lower = config['code_language'].lower()
-                
-                # If there are multiple code files, print the filename above the code block for clarity
+                # If there are multiple code files, print the filename as a comment above the code
                 if len(code_files) > 1:
-                    display_name = escape_latex(str(src_code.relative_to(folder)).replace('\\', '/'))
-                    code_block_latex += f"\\textbf{{\\texttt{{File: {display_name}}}}}\n"
+                    display_name = str(src_code.relative_to(folder)).replace('\\', '/')
+                    code_block_latex += f"/* ====== File: {display_name} ====== */\n\n"
                     
-                code_block_latex += f"\\inputminted[linenos, breaklines, fontsize=\\small]{{{lang_lower}}}{{{new_code_name}}}\n\n"
-        
+                code_block_latex += content + "\n\n"
         # --- 3. GATHER ALL IMAGES RECURSIVELY ---
         img_files = sorted(list(folder.rglob("*.png")) + list(folder.rglob("*.jpg")), key=lambda x: str(x.relative_to(folder)))
         output_latex = "No output screenshot found."
@@ -190,6 +183,7 @@ def main():
         section_tex = section_tex.replace("{{title}}", title_safe.upper())
         section_tex = section_tex.replace("{{program_number}}", str(exp_idx.get(folder.name, 0)))
         section_tex = section_tex.replace("{{aim}}", combined_aim)
+        section_tex = section_tex.replace("{{code_language}}", config['code_language'])
         section_tex = section_tex.replace("{{algorithm_section}}", combined_algo)
         section_tex = section_tex.replace("{{code_block}}", code_block_latex.strip()) 
         section_tex = section_tex.replace("{{output_section}}", output_latex.strip())
