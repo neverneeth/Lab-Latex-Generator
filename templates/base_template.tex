@@ -1,0 +1,39 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{setspace}
+
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{{{course_name}}}
+\rhead{Page \thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\titleformat{\section}{\normalfont\bfseries\uppercase}{}{0em}{}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt}
+
+\begin{document}
+
+% Auto-generated Title Page
+\begin{titlepage}
+    \centering
+    \vspace*{3cm}
+    {\Huge \textbf{{{course_name}}}}\\[1.5cm]
+    {\Large \textbf{Lab Record}}\\[2cm]
+    {\Large \textbf{Name:} {{author_name}}}\\[0.5cm]
+    {\Large \textbf{Roll No:} {{author_roll}}}\\[2cm]
+\end{titlepage}
+
+\newpage
+\tableofcontents
+\newpage
+
+% The Python script will inject all the experiments here
+{{body}}
+
+\end{document}
