@@ -3,5 +3,10 @@
   "author_name": "",
   "author_roll": "",
   "code_language": "C",
-  "code_extension": ".c"
+  "code_extension": ".c",
+  "expts_dir": "Lab Cycle Solutions",
+  "output_dir": "output",
+  "regex": {
+    "expit_dir_enum_prefix": "Q[0-9]+_"
+  }
 }
