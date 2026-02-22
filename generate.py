@@ -8,15 +8,20 @@ GEN_DIR = Path(__file__).parent
 BASE_DIR = GEN_DIR.parent
 
 def escape_latex(text):
-    """Escapes special LaTeX characters to prevent compilation errors."""
     if not text: return text
     replacements = { '#': r'\#', '%': r'\%', '&': r'\&', '_': r'\_', '$': r'\$' }
     for char, replacement in replacements.items():
         text = text.replace(char, replacement)
     return text
 
+def markdown_to_latex(text):
+    if not text: return text
+    text = re.sub(r'\*\*(.*?)\*\*', r'\\textbf{\1}', text)
+    text = re.sub(r'(?<!\*)\*(?!\*)(.*?)(?<!\*)\*(?!\*)', r'\\textit{\1}', text)
+    text = re.sub(r'`(.*?)`', r'\\texttt{\1}', text)
+    return text
+
 def format_algorithm(text, strip_prefix):
-    """Converts markdown lists to LaTeX items, conditionally stripping prefixes."""
     lines = text.split('\n')
     formatted = []
     for line in lines:
@@ -24,77 +29,60 @@ def format_algorithm(text, strip_prefix):
         if not line: continue
         
         if strip_prefix:
-            # Detects "\textbf{Step 1:}", "Step 1:", "1.", etc.
             step_match = re.match(r'^(?:\\textbf\{)?Step\s*\d+:(?:\})?\s*', line, re.IGNORECASE)
             num_match = re.match(r'^\d+\.\s*', line)
             
             if step_match:
-                clean_line = line[step_match.end():]
-                formatted.append(f"\\item {clean_line}")
+                formatted.append(f"\\item {line[step_match.end():]}")
             elif num_match:
-                clean_line = line[num_match.end():]
-                formatted.append(f"\\item {clean_line}")
+                formatted.append(f"\\item {line[num_match.end():]}")
             else:
                 formatted.append(f"\\item {line}")
         else:
-            # If flag is false, just wrap the whole raw line in \item
             formatted.append(f"\\item {line}")
-            
     return "\n".join(formatted)
 
-def markdown_to_latex(text):
-    """Converts basic Markdown syntax to LaTeX equivalents."""
-    if not text: return text
-    
-    # Bold: **text** -> \textbf{text}
-    text = re.sub(r'\*\*(.*?)\*\*', r'\\textbf{\1}', text)
-    
-    # Italic: *text* -> \textit{text}
-    # (Negative lookbehinds prevent it from matching the leftovers of bold)
-    text = re.sub(r'(?<!\*)\*(?!\*)(.*?)(?<!\*)\*(?!\*)', r'\\textit{\1}', text)
-    
-    # Inline code: `text` -> \texttt{text}
-    text = re.sub(r'`(.*?)`', r'\\texttt{\1}', text)
-    
-    return text
-
 def parse_readme(readme_path, fallback_title, language, strip_prefix):
-    """Extracts AIM, the custom algorithm heading, and the algorithm itself."""
-    aim = f"To write a {language} program to implement {fallback_title}."
-    algorithm = "\\item Algorithm not provided."
-    algo_heading = "ALGORITHM" # Default fallback
+    aim = ""
+    algorithm_latex = ""
+    content = readme_path.read_text(encoding='utf-8')
     
-    if readme_path.exists():
-        content = readme_path.read_text(encoding='utf-8')
+    # 1. Extract AIM
+    aim_match = re.search(r'^#+\s*AIM\s*\n(.*?)(?=(^#+\s|\Z))', content, re.DOTALL | re.IGNORECASE | re.MULTILINE)
+    if aim_match:
+        safe_aim = escape_latex(aim_match.group(1).strip())
+        aim = markdown_to_latex(safe_aim)
         
-        # 1. Extract AIM: looks for "# AIM" and grabs everything until the next "# " or EOF
-        aim_match = re.search(r'^#\s*AIM\s*\n(.*?)(?=(^#\s|\Z))', content, re.DOTALL | re.IGNORECASE | re.MULTILINE)
-        if aim_match:
-            safe_aim = escape_latex(aim_match.group(1).strip())
-            aim = markdown_to_latex(safe_aim)
-            
-        # 2. Extract Algorithm Heading & Content: looks for ANY heading that isn't "AIM"
-        algo_match = re.search(r'^#\s+(?!AIM\s*$)(.*?)\s*\n(.*?)(?=(^#\s|\Z))', content, re.DOTALL | re.IGNORECASE | re.MULTILINE)
-        
-        if algo_match:
-            # Group 1 is the markdown heading (e.g., "Child Process Creation Algorithm")
-            raw_heading = algo_match.group(1).strip()
+    # 2. Extract ALL Algorithm Headings & Content
+    algo_pattern = r'^#+\s+(?!AIM\s*$)(.*?)\s*\n(.*?)(?=(^#+\s|\Z))'
+    algo_matches = list(re.finditer(algo_pattern, content, re.DOTALL | re.IGNORECASE | re.MULTILINE))
+    
+    if algo_matches:
+        for match in algo_matches:
+            raw_heading = match.group(1).strip()
             algo_heading = escape_latex(raw_heading).upper()
             
-            # Group 2 is the actual step-by-step content
-            safe_algo = escape_latex(algo_match.group(2).strip())
+            safe_algo = escape_latex(match.group(2).strip())
             md_algo = markdown_to_latex(safe_algo)
-            algorithm = format_algorithm(md_algo, strip_prefix)
+            algorithm_items = format_algorithm(md_algo, strip_prefix)
             
-        elif not aim_match and content.strip():
-            # Fallback: if there are no headings at all, treat the whole file as the algorithm
-            safe_algo = escape_latex(content.strip())
-            md_algo = markdown_to_latex(safe_algo)
-            algorithm = format_algorithm(md_algo, strip_prefix)
-            
-    return aim, algorithm, algo_heading
-
-
+            algorithm_latex += (
+                f"\n%==================== {algo_heading} ====================%\n"
+                f"\\section*{{{algo_heading}}}\n"
+                f"\\begin{{enumerate}}\n{algorithm_items}\n\\end{{enumerate}}\n"
+            )
+    elif not aim_match and content.strip():
+        algo_heading = escape_latex(fallback_title).upper() + " ALGORITHM"
+        safe_algo = escape_latex(content.strip())
+        md_algo = markdown_to_latex(safe_algo)
+        algorithm_items = format_algorithm(md_algo, strip_prefix)
+        algorithm_latex += (
+            f"\n%==================== {algo_heading} ====================%\n"
+            f"\\section*{{{algo_heading}}}\n"
+            f"\\begin{{enumerate}}\n{algorithm_items}\n\\end{{enumerate}}\n"
+        )
+        
+    return aim, algorithm_latex
 
 def main():
     config_path = GEN_DIR / "config.json"
@@ -113,21 +101,10 @@ def main():
     EXP_DIR = BASE_DIR / exp_dir_name
     OUT_DIR = BASE_DIR / out_dir_name
 
-    base_template_path = GEN_DIR / "templates" / "base_template.tex"
-    section_template_path = GEN_DIR / "templates" / "section_template.tex"
-    
-    if not base_template_path.exists() or not section_template_path.exists():
-        print("Error: Template files missing in generator/templates/")
-        return
-        
-    base_template = base_template_path.read_text(encoding='utf-8')
-    section_template = section_template_path.read_text(encoding='utf-8')
+    base_template = (GEN_DIR / "templates" / "base_template.tex").read_text(encoding='utf-8')
+    section_template = (GEN_DIR / "templates" / "section_template.tex").read_text(encoding='utf-8')
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
-
-    if not EXP_DIR.exists():
-        print(f"Error: The target directory '{EXP_DIR}' was not found.")
-        return
 
     exp_folders = [d for d in EXP_DIR.iterdir() if d.is_dir()]
     
@@ -135,65 +112,85 @@ def main():
         match = re.match(prefix_regex, folder.name)
         if match:
             num_match = re.search(r'\d+', match.group())
-            if num_match:
-                return int(num_match.group())
+            if num_match: return int(num_match.group())
         return 9999 
         
     exp_folders.sort(key=get_sort_key)
-
     all_sections = ""
 
     for folder in exp_folders:
         prefix_match = re.match(prefix_regex, folder.name)
-        if not prefix_match:
-            continue 
+        if not prefix_match: continue 
             
         print(f"Processing {folder.name}...")
-        
         title_raw = folder.name[prefix_match.end():]
         title_safe = escape_latex(title_raw.replace('_', ' '))
         
-        readme_path = folder / "README.md"
-        aim, algorithm, algo_heading = parse_readme(readme_path, title_safe, config['code_language'], strip_step_prefix)
-
-        # --- NEW LOGIC FOR MINTED CODE FILES ---
-        code_files = list(folder.glob(f"*{config['code_extension']}"))
+        # --- 1. GATHER ALL MARKDOWN FILES RECURSIVELY ---
+        md_files = sorted(list(folder.rglob("*.md")), key=lambda x: str(x.relative_to(folder)))
+        aims_list, algos_list = [], []
+        
+        for md in md_files:
+            # Pass the subfolder name as fallback title in case it has its own algorithm
+            sub_title = md.parent.name if md.parent != folder else title_safe
+            aim, algo = parse_readme(md, sub_title, config['code_language'], strip_step_prefix)
+            if aim: aims_list.append(aim)
+            if algo: algos_list.append(algo)
+            
+        combined_aim = "\n\n".join(aims_list) if aims_list else f"To write a {config['code_language']} program to implement {title_safe}."
+        combined_algo = "\n".join(algos_list)
+        
+        # --- 2. GATHER ALL CODE FILES RECURSIVELY ---
+        code_files = sorted(list(folder.rglob(f"*{config['code_extension']}")), key=lambda x: str(x.relative_to(folder)))
         code_block_latex = "No code file found."
         
         if code_files:
-            src_code = code_files[0]
-            safe_folder_name = folder.name.replace(' ', '_')
-            new_code_name = f"{safe_folder_name}_code{src_code.suffix}"
-            dest_code_path = OUT_DIR / new_code_name
-            
-            # Copy the code file to output directory
-            shutil.copy2(src_code, dest_code_path)
-            
-            # Minted usually expects lowercase language names (e.g., 'c', 'python')
-            lang_lower = config['code_language'].lower()
-            code_block_latex = f"\\inputminted[linenos, breaklines, fontsize=\\small]{{{lang_lower}}}{{{new_code_name}}}"
-        # ---------------------------------------
+            code_block_latex = ""
+            for i, src_code in enumerate(code_files):
+                # Create a unique flat name for the output directory (e.g., Q7_IPC_a_pipe_main_code.c)
+                safe_rel_path = str(src_code.relative_to(folder)).replace('\\', '_').replace('/', '_')
+                new_code_name = f"{folder.name}_{safe_rel_path}"
+                dest_code_path = OUT_DIR / new_code_name
+                
+                shutil.copy2(src_code, dest_code_path)
+                
+                lang_lower = config['code_language'].lower()
+                
+                # If there are multiple code files, print the filename above the code block for clarity
+                if len(code_files) > 1:
+                    display_name = escape_latex(str(src_code.relative_to(folder)).replace('\\', '/'))
+                    code_block_latex += f"\\textbf{{\\texttt{{File: {display_name}}}}}\n"
+                    
+                code_block_latex += f"\\inputminted[linenos, breaklines, fontsize=\\small]{{{lang_lower}}}{{{new_code_name}}}\n\n"
         
-        # Handle Image File
-        img_files = list(folder.glob("*.png")) + list(folder.glob("*.jpg"))
+        # --- 3. GATHER ALL IMAGES RECURSIVELY ---
+        img_files = sorted(list(folder.rglob("*.png")) + list(folder.rglob("*.jpg")), key=lambda x: str(x.relative_to(folder)))
         output_latex = "No output screenshot found."
         
         if img_files:
-            src_img = img_files[0]
-            safe_folder_name = folder.name.replace(' ', '_')
-            new_img_name = f"{safe_folder_name}_out{src_img.suffix}"
-            dest_img_path = OUT_DIR / new_img_name
+            output_latex = ""
+            for src_img in img_files:
+                safe_rel_path = str(src_img.relative_to(folder)).replace('\\', '_').replace('/', '_')
+                new_img_name = f"{folder.name}_{safe_rel_path}"
+                dest_img_path = OUT_DIR / new_img_name
+                
+                shutil.copy2(src_img, dest_img_path)
+                
+                # Append a new figure block for EVERY image found
+                output_latex += (
+                    f"\\begin{{figure}}[H]\n"
+                    f"    \\centering\n"
+                    f"    \\fbox{{\\includegraphics[width=0.8\\textwidth, keepaspectratio]{{{new_img_name}}}}}\n"
+                    f"\\end{{figure}}\n"
+                )
             
-            shutil.copy2(src_img, dest_img_path)
-            output_latex = f"\\includegraphics[width=\\textwidth, height=0.4\\textheight, keepaspectratio]{{{new_img_name}}}"
-            
+        # --- INJECT INTO TEMPLATE ---
         section_tex = section_template
         section_tex = section_tex.replace("{{title}}", title_safe.upper())
-        section_tex = section_tex.replace("{{aim}}", aim)
-        section_tex = section_tex.replace("{{algo_heading}}", algo_heading) 
-        section_tex = section_tex.replace("{{algorithm}}", algorithm)
-        section_tex = section_tex.replace("{{code_block}}", code_block_latex) 
-        section_tex = section_tex.replace("{{output}}", output_latex)
+        section_tex = section_tex.replace("{{aim}}", combined_aim)
+        section_tex = section_tex.replace("{{algorithm_section}}", combined_algo)
+        section_tex = section_tex.replace("{{code_block}}", code_block_latex.strip()) 
+        section_tex = section_tex.replace("{{output_section}}", output_latex.strip())
         
         all_sections += section_tex + "\n"
 
@@ -205,7 +202,7 @@ def main():
 
     output_file = OUT_DIR / "Lab_Record.tex"
     output_file.write_text(final_tex, encoding='utf-8')
-    print(f"\nSuccess! Lab record, code files, and images generated in '{OUT_DIR.resolve()}'")
+    print(f"\nSuccess! Lab record generated in '{OUT_DIR.resolve()}'")
 
 if __name__ == "__main__":
     main()
