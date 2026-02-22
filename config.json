@@ -1,12 +1,19 @@
 {
   "course_name": "Operating Systems Lab",
-  "author_name": "",
-  "author_roll": "",
+  "author_name": "Your Name Here",
+  "author_roll": "Your Roll Number",
   "code_language": "C",
   "code_extension": ".c",
   "expts_dir": "Lab Cycle Solutions",
   "output_dir": "output",
+  "strip_step_prefix": true, 
   "regex": {
     "expit_dir_enum_prefix": "Q[0-9]+_"
+  },
+  "_comments": {
+    "strip_step_prefix": "Used for algorithm generation from markdown. If true, looks for counts in markdown files like 'Step 1:', 'Step 2:', etc., and removes the 'Step X:' prefix when generating new lines in the LaTeX document. If false, treats each new line in the markdown file as a separate step.",
+    "regex": {
+      "expit_dir_enum_prefix": "This regex is used to identify and remove the enumeration prefix (like Q1_, Q2_, etc.) from experiment directory names when generating section titles in the LaTeX document."
+    }
   }
 }
