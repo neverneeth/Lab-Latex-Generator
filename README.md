@@ -99,9 +99,8 @@ Folders are numbered based on their physical presence rather than their strict n
 
 ### 6. Markdown Translation
 
-Your `README.md` files require no manual LaTeX. Write normally, and the script will natively translate standard syntax such as `**bold**`, `*italic*`, and ``inline code`` tags into appropriate LaTeX formatting prior to injection.
+Your `README.md` files require no manual LaTeX. Write normally, and the script will natively translate standard syntax such as `**bold**`, `*italic*`, and ``inline code`` tags into appropriate LaTeX formatting prior to injection. Any heading specified with a # or ## will be treated as a subsection.
 
----
 
-Would you like me to draft a quick, copy-pasteable `README.md` template that users can drop into their experiment folders to ensure the parser always catches their Aim and Algorithm headings perfectly?
+
 
