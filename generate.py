@@ -116,6 +116,7 @@ def main():
         return 9999 
         
     exp_folders.sort(key=get_sort_key)
+    exp_idx = {folder.name: i+1 for i, folder in enumerate(exp_folders)}
     all_sections = ""
 
     for folder in exp_folders:
@@ -187,6 +188,7 @@ def main():
         # --- INJECT INTO TEMPLATE ---
         section_tex = section_template
         section_tex = section_tex.replace("{{title}}", title_safe.upper())
+        section_tex = section_tex.replace("{{program_number}}", str(exp_idx.get(folder.name, 0)))
         section_tex = section_tex.replace("{{aim}}", combined_aim)
         section_tex = section_tex.replace("{{algorithm_section}}", combined_algo)
         section_tex = section_tex.replace("{{code_block}}", code_block_latex.strip()) 

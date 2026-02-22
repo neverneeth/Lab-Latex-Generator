@@ -6,14 +6,13 @@
 \usepackage[a4paper, left=1.5in, right=1in, top=.25in, bottom=.25in]{geometry}
 \usepackage{setspace}
 \usepackage{soul}
-\usepackage{float} % Required to use [H] in figures
+\usepackage{float} 
 
-% Custom section format – Underlined, Bold, Large
 \titleformat{\section}
-  {\normalfont\Large\bfseries} % Font & weight
-  {}                           % No section numbers
-  {0pt}                        % No indent
-  {\ul}                        % Underline title
+  {\normalfont\Large\bfseries} 
+  {}                           
+  {0pt}                        
+  {\ul}                        
 % -----------------------------------------------------------------
 
 \setminted{breaklines, breakanywhere}
@@ -22,10 +21,10 @@
 \setlength{\parskip}{6pt}
 
 \begin{document}
-\pagenumbering{gobble} % No page numbers as per your example
 
 % Auto-generated Title Page
 \begin{titlepage}
+    \pagenumbering{gobble} % No page numbers for the title page
     \centering
     \vspace*{3cm}
     {\Huge \textbf{{{course_name}}}}\\[1.5cm]
@@ -35,8 +34,15 @@
 \end{titlepage}
 
 \newpage
+\pagenumbering{arabic} % Turn page numbers back on for ToC and Content
+
+% Temporarily disable underlining for the ToC header
+\titleformat{\section}{\normalfont\Large\bfseries}{}{0pt}{}
 \tableofcontents
 \newpage
+
+% Re-enable the underline format
+\titleformat{\section}{\normalfont\Large\bfseries}{}{0pt}{\ul}
 
 {{body}}
 

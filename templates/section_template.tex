@@ -1,11 +1,14 @@
 % ---------- HEADER ----------
 \begin{center}
-    \Large \textbf{Program No: {{program_number}} \\
+    \Large \textbf{Program No: {{program_number}} }\\
     \vspace{0.3cm}
     \normalsize \textbf{Date: } \\[0.5cm]
     \vspace{0.6cm}
     \Large \ul{\textbf{{{title}}}}
 \end{center}
+
+% Silently add this program to the Table of Contents
+\addcontentsline{toc}{section}{{{program_number}}. {{title}}}
 
 \vspace{0.6cm}
 
@@ -32,12 +35,10 @@
 
 \vspace{0.6cm}
 
-\vspace{0.6cm}
-
 % ---------- RESULT ----------
 \section*{Result}
 \fontsize{14}{16}\selectfont
 \textbf{The program was executed and the output verified.}
-\normalsize % Reset font size for the next page
+\normalsize 
 
 \newpage
