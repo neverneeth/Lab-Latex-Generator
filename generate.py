@@ -42,26 +42,59 @@ def format_algorithm(text, strip_prefix):
             
     return "\n".join(formatted)
 
-def parse_readme(readme_path, fallback_title, language):
+def markdown_to_latex(text):
+    """Converts basic Markdown syntax to LaTeX equivalents."""
+    if not text: return text
+    
+    # Bold: **text** -> \textbf{text}
+    text = re.sub(r'\*\*(.*?)\*\*', r'\\textbf{\1}', text)
+    
+    # Italic: *text* -> \textit{text}
+    # (Negative lookbehinds prevent it from matching the leftovers of bold)
+    text = re.sub(r'(?<!\*)\*(?!\*)(.*?)(?<!\*)\*(?!\*)', r'\\textit{\1}', text)
+    
+    # Inline code: `text` -> \texttt{text}
+    text = re.sub(r'`(.*?)`', r'\\texttt{\1}', text)
+    
+    return text
+
+def parse_readme(readme_path, fallback_title, language, strip_prefix):
+    """Extracts AIM, the custom algorithm heading, and the algorithm itself."""
     aim = f"To write a {language} program to implement {fallback_title}."
     algorithm = "\\item Algorithm not provided."
+    algo_heading = "ALGORITHM" # Default fallback
     
     if readme_path.exists():
         content = readme_path.read_text(encoding='utf-8')
         
-        aim_match = re.search(r'# AIM\n(.*?)(?=# ALGORITHM|\Z)', content, re.DOTALL | re.IGNORECASE)
+        # 1. Extract AIM: looks for "# AIM" and grabs everything until the next "# " or EOF
+        aim_match = re.search(r'^#\s*AIM\s*\n(.*?)(?=(^#\s|\Z))', content, re.DOTALL | re.IGNORECASE | re.MULTILINE)
         if aim_match:
-            aim = escape_latex(aim_match.group(1).strip())
+            safe_aim = escape_latex(aim_match.group(1).strip())
+            aim = markdown_to_latex(safe_aim)
             
-        algo_match = re.search(r'# ALGORITHM\n(.*)', content, re.DOTALL | re.IGNORECASE)
+        # 2. Extract Algorithm Heading & Content: looks for ANY heading that isn't "AIM"
+        algo_match = re.search(r'^#\s+(?!AIM\s*$)(.*?)\s*\n(.*?)(?=(^#\s|\Z))', content, re.DOTALL | re.IGNORECASE | re.MULTILINE)
+        
         if algo_match:
-            safe_algo = escape_latex(algo_match.group(1).strip())
-            algorithm = format_algorithm(safe_algo)
-        else:
-            safe_content = escape_latex(content.strip())
-            algorithm = format_algorithm(safe_content)
+            # Group 1 is the markdown heading (e.g., "Child Process Creation Algorithm")
+            raw_heading = algo_match.group(1).strip()
+            algo_heading = escape_latex(raw_heading).upper()
             
-    return aim, algorithm
+            # Group 2 is the actual step-by-step content
+            safe_algo = escape_latex(algo_match.group(2).strip())
+            md_algo = markdown_to_latex(safe_algo)
+            algorithm = format_algorithm(md_algo, strip_prefix)
+            
+        elif not aim_match and content.strip():
+            # Fallback: if there are no headings at all, treat the whole file as the algorithm
+            safe_algo = escape_latex(content.strip())
+            md_algo = markdown_to_latex(safe_algo)
+            algorithm = format_algorithm(md_algo, strip_prefix)
+            
+    return aim, algorithm, algo_heading
+
+
 
 def main():
     config_path = GEN_DIR / "config.json"
@@ -75,6 +108,7 @@ def main():
     exp_dir_name = config.get("expts_dir", "experiments")
     out_dir_name = config.get("output_dir", "output")
     prefix_regex = config.get("regex", {}).get("expit_dir_enum_prefix", r"^\d+_")
+    strip_step_prefix = config.get("strip_step_prefix", True)
     
     EXP_DIR = BASE_DIR / exp_dir_name
     OUT_DIR = BASE_DIR / out_dir_name
@@ -120,8 +154,8 @@ def main():
         title_safe = escape_latex(title_raw.replace('_', ' '))
         
         readme_path = folder / "README.md"
-        aim, algorithm = parse_readme(readme_path, title_safe, config['code_language'])
-        
+        aim, algorithm, algo_heading = parse_readme(readme_path, title_safe, config['code_language'], strip_step_prefix)
+
         # --- NEW LOGIC FOR MINTED CODE FILES ---
         code_files = list(folder.glob(f"*{config['code_extension']}"))
         code_block_latex = "No code file found."
@@ -156,8 +190,8 @@ def main():
         section_tex = section_template
         section_tex = section_tex.replace("{{title}}", title_safe.upper())
         section_tex = section_tex.replace("{{aim}}", aim)
+        section_tex = section_tex.replace("{{algo_heading}}", algo_heading) 
         section_tex = section_tex.replace("{{algorithm}}", algorithm)
-        # We inject the minted command directly instead of raw code text
         section_tex = section_tex.replace("{{code_block}}", code_block_latex) 
         section_tex = section_tex.replace("{{output}}", output_latex)
         
